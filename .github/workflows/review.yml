@@ -134,6 +134,7 @@ jobs:
             flake.nix
             generate_markdown_report.py
             patches
+            drv-build-support.nix
 
       - name: setup nu
         uses: ./.github/actions/setup-nu
@@ -173,6 +174,7 @@ jobs:
           USE_BUILDERS: ${{ vars.USE_BUILDERS }}
           PR_JSON: ${{ needs.prepare.outputs.pr }}
           IDENTIFY_STILL_FAILING_PACKAGES: ${{ vars.IDENTIFY_STILL_FAILING_PACKAGES }}
+          IDENTIFY_UNSUPPORTED_PACKAGES: ${{ vars.IDENTIFY_UNSUPPORTED_PACKAGES }}
 
       - name: start upterm session
         if: ${{ inputs.upterm }}

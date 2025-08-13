@@ -112,3 +112,10 @@ If the package also fails to build on the base branch, it will be marked as "sti
 Note that these build failures still count towards whether the review is considered successful or not, so if you told nixpkgs-review-gha to automatically approve or merge the PR after a successful review and a package is "still failing" to build (even if all other packages have been built successfully), the PR is *not* approved/merged and you should inspect the build failure manually.
 
 To enable this feature [create a new variable](../../settings/variables/actions/new) with the name `IDENTIFY_STILL_FAILING_PACKAGES` and set its value to `1`.
+
+### Identify unsupported packages
+If a package fails to build, try to detect whether the build failure was caused by a missing system feature.
+For example, most hosted GitHub Actions runners cannot build QEMU/KVM based NixOS tests because they lack the `kvm` feature.
+Trying to build a NixOS test on such a runner will always fail, so with this experimental feature enabled, packages that fail to build due to a missing system feature will be marked as "unsupported" and will NOT count towards review success/failure, i.e. if some packages are unsupported and all other packages have been built successfully, the PR *is* approved/merged automatically if you told nixpkgs-review-gha to do that.
+
+To enable this feature [create a new variable](../../settings/variables/actions/new) with the name `IDENTIFY_UNSUPPORTED_PACKAGES` and set its value to `1`.
