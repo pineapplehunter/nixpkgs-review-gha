@@ -40,6 +40,11 @@ on:
           - yes_sandbox_false
           - yes_sandbox_relaxed
           - yes_sandbox_true
+      push-to-cache:
+        description: "Push to cache"
+        required: true
+        type: boolean
+        default: true
       upterm:
         description: "Start upterm session after nix build"
         required: true
@@ -84,9 +89,67 @@ jobs:
             || matrix.system == 'aarch64-darwin' && inputs.aarch64-darwin == 'yes_sandbox_relaxed') && 'relaxed'
             || 'true' }}
 
+      - name: install packages
+        run: |
+          pkgs=(coreutils nixpkgs-review jq gnused)
+          if [[ ${{ inputs.push-to-cache && vars.ATTIC_SERVER != '' && vars.ATTIC_CACHE != '' }} = true ]]; then
+            pkgs+=(attic-client)
+          elif [[ ${{ inputs.push-to-cache && vars.CACHIX_CACHE != '' }} = true ]]; then
+            pkgs+=(cachix)
+          fi
+          nix profile add "${pkgs[@]/#/.#}"
+
       - name: nix build
         run: nix build --keep-going -L ${{ inputs.packages }}
         if: ${{ inputs.packages != '' }}
+
+      - name: push results to cache
+        if: ${{ inputs.push-to-cache && ((vars.ATTIC_SERVER != '' && vars.ATTIC_CACHE != '') || vars.CACHIX_CACHE != '') }}
+        continue-on-error: true
+        run: |
+          set -ex
+
+          (realpath -qe ~/.cache/nixpkgs-review/pr-${PR_NUMBER}/results/* || true) > paths
+
+          if [[ ${{ vars.ATTIC_SERVER != '' && vars.ATTIC_CACHE != '' }} = true ]]; then
+            attic login default "$ATTIC_SERVER" "$ATTIC_TOKEN"
+            if ! attic cache info "$ATTIC_CACHE"; then
+              echo "::error::attic returned an error"
+              exit 0
+            fi
+            nix path-info --all | grep -v ".drv$" | attic push --stdin "$ATTIC_CACHE"
+            info=$(curl -f -H "Authorization: Bearer ${ATTIC_TOKEN}" "${ATTIC_SERVER}_api/v1/cache-config/${ATTIC_CACHE}")
+            substituter_endpoint=$(jq -r .substituter_endpoint <<< "$info")
+            public_key=$(jq -r .public_key <<< "$info")
+            is_public=$(jq -r .is_public <<< "$info")
+          elif [[ ${{ vars.CACHIX_CACHE != '' }} = true ]]; then
+            [[ -n "$CACHIX_SIGNING_KEY" ]] || unset CACHIX_SIGNING_KEY
+            cachix push "$CACHIX_CACHE" < paths
+            info=$(curl -f -H "Authorization: Bearer ${CACHIX_AUTH_TOKEN}" "https://app.cachix.org/api/v1/cache/${CACHIX_CACHE}")
+            substituter_endpoint=$(jq -r .uri <<< "$info")
+            public_key=$(jq -r '.publicSigningKeys[]' <<< "$info")
+            is_public=$(jq -r .isPublic <<< "$info")
+          fi
+
+          [[ "$is_public" = true ]] || exit 0
+
+          echo "nix-store -r --add-root nixpkgs-pr-${PR_NUMBER}-${{ matrix.system }} \\" >> fetch_cmd
+          echo "  --option binary-caches 'https://cache.nixos.org/ $substituter_endpoint' \\" >> fetch_cmd
+          echo "  --option trusted-public-keys '" >> fetch_cmd
+          echo "  cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=" >> fetch_cmd
+          echo "  $public_key" >> fetch_cmd
+          echo -n "  '" >> fetch_cmd
+          for p in $(cat paths); do
+            echo -e " \\" >> fetch_cmd
+            echo -n "  $p" >> fetch_cmd
+          done
+        env:
+          ATTIC_SERVER: ${{ vars.ATTIC_SERVER }}
+          ATTIC_CACHE: ${{ vars.ATTIC_CACHE }}
+          ATTIC_TOKEN: ${{ secrets.ATTIC_TOKEN }}
+          CACHIX_CACHE: ${{ vars.CACHIX_CACHE }}
+          CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
+          CACHIX_SIGNING_KEY: ${{ secrets.CACHIX_SIGNING_KEY }}
 
       - name: set GITHUB_TOKEN
         if: ${{ inputs.upterm }}
