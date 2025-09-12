@@ -51,6 +51,9 @@ runs:
           build-dir = /nix/build
           sandbox = ${{ inputs.sandbox }}
           system = ${{ inputs.system }}
+          extra-system-features = nixos-test benchmark big-parallel kvm
+          extra-substituters = https://attic.s.ihavenojob.work/shogo
+          extra-trusted-public-keys = shogo:dzOG75ufKKljdUzTbGDpTuBmup3/K5RDmr28jb0jHCg=
 
     - name: create build-dir
       shell: bash
