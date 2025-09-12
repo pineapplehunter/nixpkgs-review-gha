@@ -81,6 +81,10 @@ runs:
           builders-use-substitutes = true
           sandbox = ${{ inputs.sandbox }}
           system = ${{ inputs.system }}
+          extra-system-features = nixos-test benchmark big-parallel kvm
+          extra-substituters = https://niks3-storage.gweb.ihavenojob.work?priority=80
+          extra-trusted-public-keys = niks3-cache:RW+9UW/AgeDvEawJndPbzNVYQcDPjXA4J23srAi5+sE=
+          fallback = true
           ${{ inputs.extra-nix-config }}
 
     - name: create build-dir
