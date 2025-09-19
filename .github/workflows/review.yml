@@ -189,6 +189,7 @@ jobs:
 
       - name: push results to cache
         if: ${{ inputs.push-to-cache && ((vars.ATTIC_SERVER != '' && vars.ATTIC_CACHE != '') || vars.CACHIX_CACHE != '') }}
+        continue-on-error: true
         run: |
           set -ex
 
