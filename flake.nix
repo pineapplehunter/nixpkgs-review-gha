@@ -9,7 +9,14 @@
     let
       inherit (nixpkgs) lib;
 
-      eachSystem = f: lib.genAttrs systems (system: f nixpkgs.legacyPackages.${system});
+      importNixpkgs =
+        system:
+        import nixpkgs {
+          inherit system;
+          config.allowDeprecatedx86_64Darwin = true;
+        };
+
+      eachSystem = f: lib.genAttrs systems (system: f (importNixpkgs system));
       systems = [
         "x86_64-linux"
         "aarch64-linux"
