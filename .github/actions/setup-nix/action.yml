@@ -63,7 +63,7 @@ runs:
 
     - name: post setup-nix
       if: runner.os == 'macOS'
-      uses: srz-zumix/post-run-action@v2
+      uses: srz-zumix/post-run-action@v3
       with:
         shell: bash -e {0}
         post-run: |
