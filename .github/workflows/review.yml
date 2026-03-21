@@ -265,6 +265,7 @@ jobs:
           name: report_${{ matrix.system }}.json
           path: report_${{ matrix.system }}.json
           if-no-files-found: error
+          archive: false
 
   report:
     runs-on: ubuntu-latest
@@ -325,6 +326,7 @@ jobs:
           name: report.md
           path: report.md
           if-no-files-found: error
+          archive: false
 
   post-result:
     runs-on: ubuntu-latest
