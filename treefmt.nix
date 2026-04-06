@@ -18,7 +18,7 @@
   };
 
   formatter.prettier = {
-    command = lib.getExe pkgs.nodePackages.prettier;
+    command = lib.getExe pkgs.prettier;
     includes = [
       "*.js"
       "*.yml"
