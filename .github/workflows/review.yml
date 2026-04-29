@@ -1,7 +1,8 @@
 name: review
 run-name: "review #${{ inputs.pr }}${{ inputs.extra-args && format(' ({0})', inputs.extra-args) || '' }}"
 
-permissions: {}
+permissions:
+  id-token: write
 
 on:
   workflow_dispatch:

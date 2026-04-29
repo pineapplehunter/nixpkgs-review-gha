@@ -39,7 +39,7 @@ gha group $"run nixpkgs-review ($inputs.extra-args-raw)" {
 let reviewDir = $"~/.cache/nixpkgs-review/pr-($inputs.pr)" | path expand
 let reportJson = $"($reviewDir)/report.json"
 
-if $pushToAttic or $pushToCachix {
+if true {
   gha group "push results to cache" {
     let paths = glob $"($reviewDir)/results/*" | path expand
     if ($paths | is-empty) { return }
@@ -62,6 +62,12 @@ if $pushToAttic or $pushToCachix {
         | select uri publicSigningKeys isPublic
         | update publicSigningKeys { first }
         | rename substituter_endpoint public_key is_public
+      }
+    } else {
+      {
+        substituter_endpoint: "https://niks3.gweb.ihavenojob.work?priority=90"
+        public_key: "niks3-cache:RW+9UW/AgeDvEawJndPbzNVYQcDPjXA4J23srAi5+sE="
+        is_public: true
       }
     }
 
