@@ -157,6 +157,8 @@ jobs:
           pkgs=(coreutils nixpkgs-review jq gnused)
           if [[ ${{ inputs.push-to-cache && vars.ATTIC_SERVER != '' && vars.ATTIC_CACHE != '' }} = true ]]; then
             pkgs+=(attic-client)
+          elif [[ ${{ inputs.push-to-cache && vars.NIKS3_SERVER != '' }} = true ]]; then
+            pkgs+=(niks3 hl-log-viewer)
           elif [[ ${{ inputs.push-to-cache && vars.CACHIX_CACHE != '' }} = true ]]; then
             pkgs+=(cachix)
           fi
@@ -188,7 +190,8 @@ jobs:
           JOBS_ARG: ${{ vars.USE_BUILDERS == 'always' && '-j0' || '' }}
 
       - name: push results to cache
-        if: ${{ inputs.push-to-cache && ((vars.ATTIC_SERVER != '' && vars.ATTIC_CACHE != '') || vars.CACHIX_CACHE != '') }}
+        if: ${{ inputs.push-to-cache && ((vars.ATTIC_SERVER != '' && vars.ATTIC_CACHE != '') || vars.NIKS3_SERVER != '' || vars.CACHIX_CACHE != '') }}
+        continue-on-error: true
         run: |
           set -ex
 
@@ -206,6 +209,12 @@ jobs:
             substituter_endpoint=$(jq -r .substituter_endpoint <<< "$info")
             public_key=$(jq -r .public_key <<< "$info")
             is_public=$(jq -r .is_public <<< "$info")
+          elif [[ ${{ vars.NIKS3_SERVER != '' }} ]]; then
+            echo "$NIKS3_AUTH_TOKEN" > token
+            xargs -L 100 -- niks3 push < paths 2>&1 | hl -P
+            substituter_endpoint="https://niks3-storage.gweb.ihavenojob.work"
+            public_key="niks3-cache:RW+9UW/AgeDvEawJndPbzNVYQcDPjXA4J23srAi5+sE="
+            is_public=true
           elif [[ ${{ vars.CACHIX_CACHE != '' }} = true ]]; then
             [[ -n "$CACHIX_SIGNING_KEY" ]] || unset CACHIX_SIGNING_KEY
             cachix push "$CACHIX_CACHE" < paths
@@ -234,6 +243,11 @@ jobs:
           CACHIX_CACHE: ${{ vars.CACHIX_CACHE }}
           CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
           CACHIX_SIGNING_KEY: ${{ secrets.CACHIX_SIGNING_KEY }}
+          NIKS3_SERVER_URL: ${{ vars.NIKS3_SERVER }}
+          NIKS3_AUTH_TOKEN: ${{ secrets.NIKS3_AUTH_TOKEN }}
+          NIKS3_AUTH_TOKEN_FILE: ./token
+          HL_COLOR: always
+          HL_TIME_FORMAT: ""
 
       - name: start upterm session
         if: ${{ inputs.upterm }}
