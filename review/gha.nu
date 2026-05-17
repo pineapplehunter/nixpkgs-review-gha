@@ -17,6 +17,17 @@ export def "gha step-summary" [] {
   save -rf $env.GITHUB_STEP_SUMMARY
 }
 
+export def "gha get-oidc-token" [audience: string] {
+  let headers = { Authorization: $"bearer ($env.ACTIONS_ID_TOKEN_REQUEST_TOKEN)" }
+  $env.ACTIONS_ID_TOKEN_REQUEST_URL
+  | url parse
+  | reject query
+  | update params { append { key: audience, value: $audience } }
+  | url join
+  | http get -H $headers $in
+  | get value
+}
+
 export def "gha review-inputs" [] {
   $env.INPUTS
   | from json

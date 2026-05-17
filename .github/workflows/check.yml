@@ -30,4 +30,10 @@ jobs:
         uses: ./.github/actions/setup-nix
         with:
           system: ${{ matrix.system }}
+      - uses: ryanccn/attic-action@5635a15ef0c5462194ffbd05d1daeddc74625c3a
+        with:
+          endpoint: https://attic.defelo.de/
+          cache: nixpkgs-review-gha
+          # atticd-atticadm make-token --sub github --validity 1y --pull nixpkgs-review-gha --push nixpkgs-review-gha
+          token: ${{ secrets.NRGHA_ATTIC_TOKEN }}
       - run: nix flake check -L --keep-going

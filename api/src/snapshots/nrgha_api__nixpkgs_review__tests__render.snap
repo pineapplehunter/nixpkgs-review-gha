@@ -1,0 +1,63 @@
+---
+source: src/nixpkgs_review.rs
+expression: "ReportMarkdownRenderer::new().render(&report(), &reporter())"
+---
+## `nixpkgs-review` result
+
+Generated using [`nixpkgs-review-gha`](https://github.com/Defelo/nixpkgs-review-gha) ([`f0bf939`](https://github.com/Defelo/nixpkgs-review-gha/commit/f0bf93978802df847890d6f70aa57464cfab48f3))
+
+Command: `nixpkgs-review pr 1337 -a extra-package`
+Commit: [`842d0b3850da7fb970fd81c60b7527ff8e3a3c63`](https://github.com/NixOS/nixpkgs/commit/842d0b3850da7fb970fd81c60b7527ff8e3a3c63) ([subsequent changes](https://github.com/NixOS/nixpkgs/compare/842d0b3850da7fb970fd81c60b7527ff8e3a3c63..pull/1337/head))
+Merge: [`d8b086693fa2d763b675ecf2373f7a3b8ca9755d`](https://github.com/NixOS/nixpkgs/commit/d8b086693fa2d763b675ecf2373f7a3b8ca9755d)
+
+Triggered by @some-user (123456)
+Logs: https://github.com/some-user/nixpkgs-review-gha/actions/runs/42/attempts/1
+
+<details><summary>Download packages from cache:</summary><ul>
+<li><details><summary><code>x86_64-linux</code></summary>
+
+```shell
+nix-store -r \
+  /nix/store/zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz-foo-0.0.0
+```
+
+</details></li>
+<li><details><summary><code>aarch64-darwin</code></summary>
+
+```shell
+nix-store -r \
+  /nix/store/yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy-asdf-0.0.0
+```
+
+</details></li>
+</ul></details>
+
+---
+### `x86_64-linux`
+<details><summary>:fast_forward: 1 package marked as broken and skipped:</summary><ul>
+<li>broken_pkg</li>
+</ul></details><details><summary>:fast_forward: 1 package present in ofBorgs evaluation, but not found in the checkout:</summary><ul>
+<li>non_existent_pkg</li>
+</ul></details><details><summary>:fast_forward: 1 package blacklisted:</summary><ul>
+<li>blacklisted_pkg</li>
+</ul></details><details><summary>:x: 1 package failed to build:</summary><ul>
+<li>failed_pkg</li>
+</ul></details><details><summary>:x: 1 package still failing to build (also failed on master):</summary><ul>
+<li>still_failing_pkg</li>
+</ul></details><details><summary>:white_check_mark: 1 test built:</summary><ul>
+<li>tests_pkg</li>
+</ul></details><details><summary>:white_check_mark: 1 package built:</summary><ul>
+<li>built_pkg (foo, bar)</li>
+</ul></details><details><summary>:grey_question: 1 package not supported on this runner:</summary><ul>
+<li>unsupported_pkg</li>
+</ul></details>
+
+---
+### `aarch64-linux`
+:white_check_mark: *No rebuilds*
+
+---
+### `aarch64-darwin` (sandbox = relaxed)
+<details><summary>:white_check_mark: 1 package built:</summary><ul>
+<li>asdf</li>
+</ul></details>

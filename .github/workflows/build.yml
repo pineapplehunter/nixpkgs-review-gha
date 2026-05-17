@@ -1,7 +1,8 @@
 name: build
 run-name: "build ${{ inputs.packages }}"
 
-permissions: {}
+permissions:
+  id-token: write
 
 on:
   workflow_dispatch:

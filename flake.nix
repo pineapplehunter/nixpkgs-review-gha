@@ -1,10 +1,11 @@
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    crane.url = "github:ipetkov/crane";
   };
 
   outputs =
-    { self, nixpkgs }:
+    { self, nixpkgs, ... }@inputs:
 
     let
       inherit (nixpkgs) lib;
@@ -46,6 +47,12 @@
     in
 
     {
+      packages = eachSystem (pkgs: {
+        nrgha-api = pkgs.callPackage ./api/package.nix { inherit (inputs) crane; };
+      });
+
+      nixosModules.nrgha-api = import ./api/module.nix { inherit self; };
+
       legacyPackages = eachSystem lib.id;
 
       formatter = eachSystem (
@@ -60,6 +67,8 @@
 
       checks = eachSystem (pkgs: {
         inherit (pkgs) nixpkgs-review;
+        inherit (self.packages.${pkgs.stdenv.hostPlatform.system}.nrgha-api) clippy;
+        packages = pkgs.linkFarm "packages" self.packages.${pkgs.stdenv.hostPlatform.system};
         fmt = pkgs.runCommand "fmt-check" { } ''
           cp -r --no-preserve=mode ${self} repo
           ${lib.getExe self.formatter.${pkgs.stdenv.hostPlatform.system}} -C repo --ci

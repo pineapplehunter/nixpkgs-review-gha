@@ -85,10 +85,34 @@ gha group "generate report" {
   | gha step-summary
 
   {
+    reports: $reports
     report: $report
     success: $success
   }
 } | let review
+
+if $inputs.post-result and ($env.GH_TOKEN | is-empty) {
+  gha group "submit reports to api" {
+    let api_url = $env.API_URL | default -e "https://nrgha-api.defelo.de"
+    let audience = http get $"($api_url)/oidc_client_id"
+    let oidc_token = gha get-oidc-token $audience
+
+    $review.reports
+    | select system nixConfig fetchCmd result
+    | update nixConfig { select sandbox }
+    | flatten nixConfig result
+    | rename -c { fetchCmd: fetch_cmd }
+    | {
+      pr: $env.PR_NUMBER,
+      extra_args: $inputs.extra-args-raw,
+      head: $head,
+      merge: $merge,
+      base_ref: $base_ref,
+      systems: $in,
+    }
+    | http post $"($api_url)/submit_report" -H {Authorization: $"Bearer ($oidc_token)"} -t application/json
+  }
+}
 
 if ($env.GH_TOKEN | is-empty) {
   match $inputs.on-success {
