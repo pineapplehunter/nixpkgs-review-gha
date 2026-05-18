@@ -139,6 +139,8 @@ jobs:
 
   review:
     needs: [prepare]
+    permissions:
+      id-token: write
     strategy:
       fail-fast: false
       matrix:
@@ -179,6 +181,7 @@ jobs:
       - name: setup nix
         uses: $/.github/actions/setup-nix
         with:
+          push-to-cache: ${{ inputs.push-to-cache }}
           extra-nix-config: ${{ vars.EXTRA_NIX_CONFIG }}
           system: ${{ matrix.system }}
           sandbox: ${{

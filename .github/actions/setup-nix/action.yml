@@ -20,6 +20,9 @@ inputs:
   ssh-cert:
     type: string
     default: ""
+  push-to-cache:
+    description: Enable automatic niks3 uploads
+    default: "true"
 
 runs:
   using: composite
@@ -92,7 +95,13 @@ runs:
           ${{ runner.os == 'Linux' && 'extra-system-features = uid-range' || '' }}
           sandbox = ${{ inputs.sandbox }}
           system = ${{ inputs.system }}
+          fallback = true
           ${{ inputs.extra-nix-config }}
+
+    - uses: pineapplehunter/niks3-action@ca134429860ff51a0542869464e3b20d3b32c121 # install release in the Nix store
+      if: inputs.push-to-cache == 'true'
+      with:
+        server-url: https://niks3.s.ihavenojob.work
 
     - name: create build-dir
       shell: bash

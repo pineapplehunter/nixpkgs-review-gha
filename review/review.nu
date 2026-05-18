@@ -43,7 +43,7 @@ gha group $"run nixpkgs-review ($inputs.extra-args-raw) ($buildArgs)" {
 let reviewDir = $"~/.cache/nixpkgs-review/pr-($inputs.pr)" | path expand
 let reportJson = $"($reviewDir)/report.json"
 
-if $pushToAttic or $pushToCachix {
+if $inputs.push-to-cache {
   gha group "push results to cache" {
     let paths = glob $"($reviewDir)/results/*" | path expand
     if ($paths | is-empty) { return }
@@ -66,6 +66,20 @@ if $pushToAttic or $pushToCachix {
         | select uri publicSigningKeys isPublic
         | update publicSigningKeys { first }
         | rename substituter_endpoint public_key is_public
+      }
+    } else {
+      let substituter = "https://niks3.gweb.ihavenojob.work"
+      # Automatic uploads may still be queued. Only advertise paths the public cache has now.
+      let check = nix path-info --store $substituter --option narinfo-cache-negative-ttl 0 --recursive ...$paths | complete
+      if $check.exit_code != 0 {
+        print "niks3 cache does not have all review outputs yet; omitting cache fetch command"
+        return
+      }
+
+      {
+        substituter_endpoint: $substituter
+        public_key: "niks3-cache:RW+9UW/AgeDvEawJndPbzNVYQcDPjXA4J23srAi5+sE="
+        is_public: true
       }
     }
 
