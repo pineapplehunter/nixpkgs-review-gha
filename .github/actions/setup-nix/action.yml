@@ -29,6 +29,13 @@ runs:
       with:
         hatchet-protocol: rampage
 
+    - name: enable unprivileged userns clone
+      if: runner.os == 'Linux'
+      shell: bash
+      run: |
+        sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+        sudo sysctl -w kernel.unprivileged_userns_clone=1
+
     - name: reclaim space (darwin)
       if: runner.os == 'macOS'
       shell: bash
@@ -81,7 +88,22 @@ runs:
           builders-use-substitutes = true
           sandbox = ${{ inputs.sandbox }}
           system = ${{ inputs.system }}
+          extra-system-features = nixos-test benchmark big-parallel kvm
+          fallback = true
           ${{ inputs.extra-nix-config }}
+
+    - name: Build niks3
+      id: niks3
+      shell: bash
+      run: |
+        path=$(nix build nixpkgs#niks3 --print-out-paths --no-link)
+        echo "store-path=$path" >> "$GITHUB_OUTPUT"
+
+    - uses: Mic92/niks3-action@v1
+      with:
+        server-url: https://niks3.s.ihavenojob.work
+        niks3-bin: ${{ steps.niks3.outputs.store-path }}/bin/niks3
+        substituter: "https://niks3.gweb.ihavenojob.work?priority=90"
 
     - name: create build-dir
       shell: bash
