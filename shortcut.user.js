@@ -8,16 +8,27 @@ const user = document.querySelector("header.GlobalNav button[data-login]")?.getA
 
 const repo = user ? `${user}/nixpkgs-review-gha` : null;
 
-const reviewDefaults = ({ title, commits, labels, author, authoredByMe, hasLinuxRebuilds, hasDarwinRebuilds }) => {
+const reviewDefaults = ({
+  title,
+  commits,
+  labels,
+  author,
+  authoredByMe,
+  targetBranch,
+  hasLinuxRebuilds,
+  hasDarwinRebuilds,
+}) => {
   const darwinSandbox = "relaxed";
 
   const hasRebuilds = hasLinuxRebuilds || hasDarwinRebuilds;
+  const targetsStableRelease = targetBranch.match(/-\d\d\.\d\d$/);
 
   return {
     // "branch": "main",
     "x86_64-linux": !hasRebuilds || hasLinuxRebuilds,
     "aarch64-linux": !hasRebuilds || hasLinuxRebuilds,
-    "x86_64-darwin": !hasRebuilds || hasDarwinRebuilds ? `yes_sandbox_${darwinSandbox}` : "no",
+    "x86_64-darwin":
+      targetsStableRelease && (!hasRebuilds || hasDarwinRebuilds) ? `yes_sandbox_${darwinSandbox}` : "no",
     "aarch64-darwin": !hasRebuilds || hasDarwinRebuilds ? `yes_sandbox_${darwinSandbox}` : "no",
     // "riscv64-linux": false,
     // "extra-args": "",
@@ -47,6 +58,9 @@ const getPrDetails = pr => {
   const title = document.querySelector(
     "div[data-component=TitleArea] .text-normal.markdown-title, bdi.js-issue-title.markdown-title",
   ).innerText;
+  const targetBranch = document
+    .querySelector("[data-component=PH_Title] a[data-component=BranchName]")
+    .innerText.replace(/^NixOS:/, "");
   const commits = [...document.querySelectorAll(".TimelineItem-body a.markdown-title[href*='/commits/']")].flatMap(
     ({ title, href }) => {
       const match = /\/NixOS\/nixpkgs\/pull\/(\d+)\/commits\/([0-9a-f]+)$/i.exec(href);
@@ -71,7 +85,17 @@ const getPrDetails = pr => {
     .innerText.trim()
     .toUpperCase();
 
-  return { title, commits, labels, author, authoredByMe, hasLinuxRebuilds, hasDarwinRebuilds, state };
+  return {
+    title,
+    commits,
+    labels,
+    author,
+    authoredByMe,
+    targetBranch,
+    hasLinuxRebuilds,
+    hasDarwinRebuilds,
+    state,
+  };
 };
 
 const setupActionsPage = async () => {
