@@ -80,6 +80,9 @@ jobs:
         with:
           sparse-checkout: .github/actions
 
+      - name: setup nu
+        uses: ./.github/actions/setup-nu
+
       - name: setup nix
         uses: ./.github/actions/setup-nix
         with:
