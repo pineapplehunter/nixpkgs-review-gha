@@ -3,9 +3,13 @@ use gha.nu *
 let inputs = gha review-inputs
 let pushToAttic = $inputs.push-to-cache and $env.ATTIC_SERVER != '' and $env.ATTIC_CACHE != ''
 let pushToCachix = $inputs.push-to-cache and $env.CACHIX_CACHE != ''
+let pr = $env.PR_JSON | from json
+let base = $pr.base.sha
+let jobsArg = if $env.USE_BUILDERS == "always" { "-j0" } else { "" }
+let system = nix config show system
 
 gha group "install packages" {
-  [ nixpkgs-review ]
+  [ nixpkgs-review, generate-markdown-report ]
   | if $pushToAttic { $in ++ [ attic-client ] } else { }
   | if $pushToCachix { $in ++ [ cachix ] } else { }
   | each { $".#($in)" }
@@ -13,19 +17,53 @@ gha group "install packages" {
 }
 
 gha group $"run nixpkgs-review ($inputs.extra-args-raw)" {
-  let buildArgs = "-L"
-  | if $env.USE_BUILDERS == "always" { $"($in) -j0" } else { }
-
   cd nixpkgs
   nixpkgs-review -- pr $env.PR_NUMBER ...[
     --no-shell
     --no-exit-status
     --no-headers
     --print-result
-    --build-args=($buildArgs)
+    --build-args=($"-L ($jobsArg)")
     --pr-json=($env.PR_JSON)
     ...$inputs.extra-args
   ]
+}
+
+if $env.IDENTIFY_STILL_FAILING_PACKAGES == '1' {
+  gha group "identify still failing packages" {
+    cd nixpkgs
+    let reportJson = $"~/.cache/nixpkgs-review/pr-($env.PR_NUMBER)/report.json" | path expand
+    let reportMd = $"~/.cache/nixpkgs-review/pr-($env.PR_NUMBER)/report.md" | path expand
+    let report = open $reportJson
+    mut result = $report.result | get $system
+    if ($result.failed | is-not-empty) {
+      git fetch origin $base
+      git switch -d $base
+
+      $result.failed
+      | insert path { try { nix eval -f. $"($in.name).outPath" --raw } }
+      | where path != null
+      | let candidates
+
+      if ($candidates | is-not-empty) {
+        try { nix build --keep-going -L $jobsArg -f. ...$candidates.name}
+      }
+
+      $candidates
+      | where { nix store verify --no-contents --no-trust $in.path | complete | $in.exit_code != 0 }
+      | select name aliases
+      | let stillFailing
+      | get name
+      | let stillFailingNames
+
+      $result.failed = $result.failed | where name not-in $stillFailingNames
+      $result.still_failing = $stillFailing
+    }
+    let report = $report | update result ($report.result | update $system $result)
+
+    $report | save -f $reportJson
+    generate-markdown-report $reportJson $base | save -f $reportMd
+  }
 }
 
 if $pushToAttic or $pushToCachix {

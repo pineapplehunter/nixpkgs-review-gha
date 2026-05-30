@@ -103,3 +103,12 @@ The userscript assumes that you forked this repository to your personal account 
 2. Click on "Run workflow"
 3. Enter the number of the pull request in nixpkgs you would like to review and click on "Run workflow"
 4. Reload the page if necessary and click on the review run to see the logs
+
+## Experimental Features
+
+### Identify still failing packages
+If a package fails to build, try to build the same package again, but on the base branch (e.g. `master` or `release-XX.YY`).
+If the package also fails to build on the base branch, it will be marked as "still failing" in the report to make it easier to see which build failures are unlikely to be caused by the PR being reviewed.
+Note that these build failures still count towards whether the review is considered successful or not, so if you told nixpkgs-review-gha to automatically approve or merge the PR after a successful review and a package is "still failing" to build (even if all other packages have been built successfully), the PR is *not* approved/merged and you should inspect the build failure manually.
+
+To enable this feature [create a new variable](../../settings/variables/actions/new) with the name `IDENTIFY_STILL_FAILING_PACKAGES` and set its value to `1`.

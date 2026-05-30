@@ -132,6 +132,8 @@ jobs:
             review
             flake.lock
             flake.nix
+            generate_markdown_report.py
+            patches
 
       - name: setup nu
         uses: ./.github/actions/setup-nu
@@ -170,6 +172,7 @@ jobs:
           CACHIX_SIGNING_KEY: ${{ secrets.CACHIX_SIGNING_KEY }}
           USE_BUILDERS: ${{ vars.USE_BUILDERS }}
           PR_JSON: ${{ needs.prepare.outputs.pr }}
+          IDENTIFY_STILL_FAILING_PACKAGES: ${{ vars.IDENTIFY_STILL_FAILING_PACKAGES }}
 
       - name: start upterm session
         if: ${{ inputs.upterm }}

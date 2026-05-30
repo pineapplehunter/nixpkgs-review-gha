@@ -14,6 +14,14 @@
         import nixpkgs {
           inherit system;
           config.allowDeprecatedx86_64Darwin = true;
+
+          overlays = [
+            (final: prev: {
+              nixpkgs-review = prev.nixpkgs-review.overrideAttrs (attrs: {
+                patches = attrs.patches or [ ] ++ [ ./patches/0001-Add-package-aliases-to-JSON-report.patch ];
+              });
+            })
+          ];
         };
 
       eachSystem = f: lib.genAttrs systems (system: f (importNixpkgs system));
@@ -27,6 +35,14 @@
     in
 
     {
+      packages = eachSystem (pkgs: {
+        generate-markdown-report = pkgs.writers.writePython3Bin "generate-markdown-report" {
+          flakeIgnore = [
+            "E501" # line too long
+          ];
+        } (builtins.readFile ./generate_markdown_report.py);
+      });
+
       legacyPackages = eachSystem lib.id;
 
       formatter = eachSystem (
@@ -41,6 +57,7 @@
 
       checks = eachSystem (pkgs: {
         inherit (pkgs) nixpkgs-review;
+        packages = pkgs.linkFarm "packages" self.packages.${pkgs.stdenv.hostPlatform.system};
         fmt = pkgs.runCommand "fmt-check" { } ''
           cp -r --no-preserve=mode ${self} repo
           ${lib.getExe self.formatter.${pkgs.stdenv.hostPlatform.system}} -C repo --ci

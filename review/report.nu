@@ -50,7 +50,7 @@ gha group "generate report" {
   $reports.report.result
   | values
   | flatten
-  | all { get failed | is-empty }
+  | all { select failed still_failing? | values | compact | flatten | is-empty }
   | let success
   | if $in { print "SUCCESS" } else { print "FAILURE" }
 
