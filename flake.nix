@@ -54,6 +54,10 @@
           ${lib.getExe self.formatter.${pkgs.stdenv.hostPlatform.system}} -C repo --ci
           touch $out
         '';
+        nu = pkgs.runCommand "nu-check" { } ''
+          ${lib.getExe pkgs.nushell} -c 'for x in (glob ${self}/**/*.nu) { print $"checking ($x)"; nu-check $x -d }'
+          touch $out
+        '';
       });
     };
 
