@@ -16,11 +16,7 @@ let systems = [
 ]
 
 gha group "generate report" {
-  $systems
-  | where ($"report_($it).json" | path exists)
-  | wrap system
-  | insert report { open $"report_($in.system).json" }
-  | let reports
+  let reports = $systems | each { try { open $"report_($in).json" } }
 
   $reports | to json | print
   $reports | to json | save reports.json
@@ -39,8 +35,8 @@ gha group "generate report" {
   $report += $"Logs: https://github.com/($env.REPO)/actions/runs/($env.RUN_ID)\n\n"
 
   $reports
-  | where ($it.report.fetch_cmd | is-not-empty)
-  | each { $"<li><details><summary><code>($in.system)</code></summary>\n\n```shell\n($in.report.fetch_cmd)\n```\n</details></li>\n" }
+  | where ($it.fetchCmd | is-not-empty)
+  | each { $"<li><details><summary><code>($in.system)</code></summary>\n\n```shell\n($in.fetchCmd)\n```\n</details></li>\n" }
   | str join
   | if ($in | is-not-empty) {
     $report += $"<details><summary>Download packages from cache:</summary><ul>\n($in)</ul></details>\n\n"
@@ -59,7 +55,7 @@ gha group "generate report" {
     | $"<details>\n  <summary>($emoji) ($packages | length) ($what)($plural) ($msg):</summary>\n  <ul>\n($in)  </ul>\n</details>\n"
   }
 
-  for it in ($reports.report | update result { transpose system result } | flatten -a result ) {
+  for it in $reports {
     let hasRebuilds = $it.result | values | flatten | is-not-empty
     let systemSuffix = if $it.system !~ '-linux$' and $hasRebuilds { $" \(sandbox = ($it.nixConfig.sandbox))" }
 
@@ -79,9 +75,7 @@ gha group "generate report" {
   print $report
   $report | save report.md
 
-  $reports.report.result
-  | values
-  | flatten
+  $reports.result
   | all { select failed still_failing | values | compact | flatten | is-empty }
   | let success
   | if $in { print "SUCCESS" } else { print "FAILURE" }

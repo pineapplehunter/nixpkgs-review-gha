@@ -33,92 +33,6 @@ gha group $"run nixpkgs-review ($inputs.extra-args-raw)" {
 
 let reviewDir = $"~/.cache/nixpkgs-review/pr-($env.PR_NUMBER)" | path expand
 let reportJson = $"($reviewDir)/report.json"
-let reportMd = $"($reviewDir)/report.md"
-
-open $reportJson
-| insert nixConfig { sandbox: (nix config show sandbox) }
-| insert head $head
-| insert base $base
-| insert merge $merge
-| update result { upsert $system {
-  default {}
-  | upsert non-existent { default [] }
-  | rename -c { non-existent: non_existent }
-  | upsert broken { default [] }
-  | upsert non_existent { default [] }
-  | upsert blacklisted { default [] }
-  | upsert failed { default [] }
-  | upsert still_failing { default [] }
-  | upsert tests { default [] }
-  | upsert built { default [] }
-  | upsert unsupported { default [] }
-} }
-| let report
-| get result
-| get $system
-| let result
-
-if $env.IDENTIFY_UNSUPPORTED_PACKAGES == '1' {
-  gha group "identify unsupported packages" {
-    cd nixpkgs
-    if ($result.failed | is-empty) { return $result }
-
-    git fetch origin $merge
-    git switch -d $merge
-
-    nix config show --json | save -r ../nix-config.json
-    nix derivation show --recursive -f. ...$result.failed.name | save -r ../drv-graph.json
-    let buildSupport = nix-instantiate ...[
-      --eval --strict --json ("../drv-build-support.nix" | path expand)
-      --argstr configPath ("../nix-config.json" | path expand)
-      --argstr drvGraphPath ("../drv-graph.json" | path expand)
-    ] | from json
-
-    $result.failed
-    | insert drv { nix eval -f. $"($in.name).drvPath" --raw | path basename }
-    | where {|pkg| $buildSupport | get $pkg.drv | not $in.supported }
-    | select name aliases
-    | let unsupported
-    | get name
-    | let unsupportedNames
-
-    $result
-    | update failed { where name not-in $unsupportedNames }
-    | update unsupported { append $unsupported }
-  }
-} else { $result } | let result
-let report = $report | update result { update $system $result }
-
-if $env.IDENTIFY_STILL_FAILING_PACKAGES == '1' {
-  gha group "identify still failing packages" {
-    cd nixpkgs
-    if ($result.failed | is-empty) { return $result }
-
-    git fetch origin $base
-    git switch -d $base
-
-    $result.failed
-    | insert path { try { nix eval -f. $"($in.name).outPath" --raw } }
-    | where path != null
-    | let candidates
-
-    if ($candidates | is-not-empty) {
-      try { nix build --keep-going -L $jobsArg -f. ...$candidates.name }
-    }
-
-    $candidates
-    | where { nix store verify --no-contents --no-trust $in.path | complete | $in.exit_code != 0 }
-    | select name aliases
-    | let stillFailing
-    | get name
-    | let stillFailingNames
-
-    $result
-    | update failed { where name not-in $stillFailingNames }
-    | update still_failing { append $stillFailing }
-  }
-} else { $result } | let result
-let report = $report | update result { update $system $result }
 
 if $pushToAttic or $pushToCachix {
   gha group "push results to cache" {
@@ -171,7 +85,94 @@ if $pushToAttic or $pushToCachix {
     $fetchCmd
   }
 } | let fetchCmd
-let report = $report | insert fetch_cmd $fetchCmd
+
+open $reportJson
+| reject systems
+| insert system $system
+| insert fetchCmd $fetchCmd
+| insert nixConfig { sandbox: (nix config show sandbox) }
+| insert head $head
+| insert base $base
+| insert merge $merge
+| update result {
+  get -o $system
+  | default {}
+  | upsert non-existent { default [] }
+  | rename -c { non-existent: non_existent }
+  | upsert broken { default [] }
+  | upsert non_existent { default [] }
+  | upsert blacklisted { default [] }
+  | upsert failed { default [] }
+  | upsert still_failing { default [] }
+  | upsert tests { default [] }
+  | upsert built { default [] }
+  | upsert unsupported { default [] }
+}
+| let report
+| get result
+| let result
+
+if $env.IDENTIFY_UNSUPPORTED_PACKAGES == '1' {
+  gha group "identify unsupported packages" {
+    cd nixpkgs
+    if ($result.failed | is-empty) { return $result }
+
+    git fetch origin $merge
+    git switch -d $merge
+
+    nix config show --json | save -r ../nix-config.json
+    nix derivation show --recursive -f. ...$result.failed.name | save -r ../drv-graph.json
+    let buildSupport = nix-instantiate ...[
+      --eval --strict --json ("../drv-build-support.nix" | path expand)
+      --argstr configPath ("../nix-config.json" | path expand)
+      --argstr drvGraphPath ("../drv-graph.json" | path expand)
+    ] | from json
+
+    $result.failed
+    | insert drv { nix eval -f. $"($in.name).drvPath" --raw | path basename }
+    | where {|pkg| $buildSupport | get $pkg.drv | not $in.supported }
+    | select name aliases
+    | let unsupported
+    | get name
+    | let unsupportedNames
+
+    $result
+    | update failed { where name not-in $unsupportedNames }
+    | update unsupported { append $unsupported }
+  }
+} else { $result } | let result
+let report = $report | update result $result
+
+if $env.IDENTIFY_STILL_FAILING_PACKAGES == '1' {
+  gha group "identify still failing packages" {
+    cd nixpkgs
+    if ($result.failed | is-empty) { return $result }
+
+    git fetch origin $base
+    git switch -d $base
+
+    $result.failed
+    | insert path { try { nix eval -f. $"($in.name).outPath" --raw } }
+    | where path != null
+    | let candidates
+
+    if ($candidates | is-not-empty) {
+      try { nix build --keep-going -L $jobsArg -f. ...$candidates.name }
+    }
+
+    $candidates
+    | where { nix store verify --no-contents --no-trust $in.path | complete | $in.exit_code != 0 }
+    | select name aliases
+    | let stillFailing
+    | get name
+    | let stillFailingNames
+
+    $result
+    | update failed { where name not-in $stillFailingNames }
+    | update still_failing { append $stillFailing }
+  }
+} else { $result } | let result
+let report = $report | update result $result
 
 gha group "report" {
   $report | save report_($system).json
