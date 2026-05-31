@@ -3,6 +3,8 @@ use gha.nu *
 let inputs = gha review-inputs
 let pr = $env.PR_JSON | from json
 let head = $pr.head.sha
+let base = $pr.base.sha
+let base_ref = $pr.base.ref
 let merge = $pr.merge_commit_sha
 
 let systems = [
@@ -14,10 +16,11 @@ let systems = [
 ]
 
 gha group "generate report" {
-  let reports = $systems
+  $systems
   | where ($"report_($it).json" | path exists)
   | wrap system
   | insert report { open $"report_($in.system).json" }
+  | let reports
 
   $reports | to json | print
   $reports | to json | save reports.json
@@ -43,14 +46,43 @@ gha group "generate report" {
     $report += $"<details><summary>Download packages from cache:</summary><ul>\n($in)</ul></details>\n\n"
   }
 
-  $report += $reports.report.md | str join
+  let htmlPkgsSection = {|emoji, packages, msg, what = "package"|
+    if ($packages | is-empty) { return "" }
+    let plural = if ($packages | length) > 1 { "s" } else { "" }
+    $packages
+    | each {|pkg|
+      $pkg.name
+      | if ($pkg.aliases | is-not-empty) { $"($in) \(($pkg.aliases | str join ', '))" } else { }
+      | $"    <li>($in)</li>\n"
+    }
+    | str join
+    | $"<details>\n  <summary>($emoji) ($packages | length) ($what)($plural) ($msg):</summary>\n  <ul>\n($in)  </ul>\n</details>\n"
+  }
+
+  for it in ($reports.report | update result { transpose system result } | flatten -a result ) {
+    let hasRebuilds = $it.result | values | flatten | is-not-empty
+    let systemSuffix = if $it.system !~ '-linux$' and $hasRebuilds { $" \(sandbox = ($it.nixConfig.sandbox))" }
+
+    $report += "\n---\n"
+    $report += $"### `($it.system)`($systemSuffix)\n"
+    $report += do $htmlPkgsSection ":fast_forward:" $it.result.broken "marked as broken and skipped"
+    $report += do $htmlPkgsSection ":fast_forward:" $it.result.non_existent "present in ofBorgs evaluation, but not found in the checkout"
+    $report += do $htmlPkgsSection ":fast_forward:" $it.result.blacklisted "blacklisted"
+    $report += do $htmlPkgsSection ":x:" $it.result.failed "failed to build"
+    $report += do $htmlPkgsSection ":x:" $it.result.still_failing $"still failing to build \(also failed on ($base_ref))"
+    $report += do $htmlPkgsSection ":white_check_mark:" $it.result.tests "built" "test"
+    $report += do $htmlPkgsSection ":white_check_mark:" $it.result.built "built"
+    $report += do $htmlPkgsSection ":grey_question:" $it.result.unsupported "not supported on this runner"
+    if not $hasRebuilds { $report += ":white_check_mark: *No rebuilds*\n" }
+  }
 
   print $report
+  $report | save report.md
 
   $reports.report.result
   | values
   | flatten
-  | all { select failed still_failing? | values | compact | flatten | is-empty }
+  | all { select failed still_failing | values | compact | flatten | is-empty }
   | let success
   | if $in { print "SUCCESS" } else { print "FAILURE" }
 

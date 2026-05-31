@@ -4,13 +4,14 @@ let inputs = gha review-inputs
 let pushToAttic = $inputs.push-to-cache and $env.ATTIC_SERVER != '' and $env.ATTIC_CACHE != ''
 let pushToCachix = $inputs.push-to-cache and $env.CACHIX_CACHE != ''
 let pr = $env.PR_JSON | from json
+let head = $pr.head.sha
 let base = $pr.base.sha
 let merge = $pr.merge_commit_sha
 let jobsArg = if $env.USE_BUILDERS == "always" { "-j0" } else { "" }
 let system = nix config show system
 
 gha group "install packages" {
-  [ nixpkgs-review, generate-markdown-report ]
+  [ nixpkgs-review ]
   | if $pushToAttic { $in ++ [ attic-client ] } else { }
   | if $pushToCachix { $in ++ [ cachix ] } else { }
   | each { $".#($in)" }
@@ -34,12 +35,30 @@ let reviewDir = $"~/.cache/nixpkgs-review/pr-($env.PR_NUMBER)" | path expand
 let reportJson = $"($reviewDir)/report.json"
 let reportMd = $"($reviewDir)/report.md"
 
-let report = open $reportJson
-let result = $report.result | get $system
-mut rebuildReport = false
+open $reportJson
+| insert nixConfig { sandbox: (nix config show sandbox) }
+| insert head $head
+| insert base $base
+| insert merge $merge
+| update result { upsert $system {
+  default {}
+  | upsert non-existent { default [] }
+  | rename -c { non-existent: non_existent }
+  | upsert broken { default [] }
+  | upsert non_existent { default [] }
+  | upsert blacklisted { default [] }
+  | upsert failed { default [] }
+  | upsert still_failing { default [] }
+  | upsert tests { default [] }
+  | upsert built { default [] }
+  | upsert unsupported { default [] }
+} }
+| let report
+| get result
+| get $system
+| let result
 
 if $env.IDENTIFY_UNSUPPORTED_PACKAGES == '1' {
-  $rebuildReport = true
   gha group "identify unsupported packages" {
     cd nixpkgs
     if ($result.failed | is-empty) { return $result }
@@ -65,12 +84,12 @@ if $env.IDENTIFY_UNSUPPORTED_PACKAGES == '1' {
 
     $result
     | update failed { where name not-in $unsupportedNames }
-    | insert unsupported $unsupported
+    | update unsupported { append $unsupported }
   }
 } else { $result } | let result
+let report = $report | update result { update $system $result }
 
 if $env.IDENTIFY_STILL_FAILING_PACKAGES == '1' {
-  $rebuildReport = true
   gha group "identify still failing packages" {
     cd nixpkgs
     if ($result.failed | is-empty) { return $result }
@@ -96,15 +115,10 @@ if $env.IDENTIFY_STILL_FAILING_PACKAGES == '1' {
 
     $result
     | update failed { where name not-in $stillFailingNames }
-    | insert still_failing $stillFailing
+    | update still_failing { append $stillFailing }
   }
 } else { $result } | let result
-
-let report = $report | update result ($report.result | update $system $result)
-if $rebuildReport {
-  $report | save -f $reportJson
-  generate-markdown-report $reportJson $base | save -f $reportMd
-}
+let report = $report | update result { update $system $result }
 
 if $pushToAttic or $pushToCachix {
   gha group "push results to cache" {
@@ -152,9 +166,14 @@ if $pushToAttic or $pushToCachix {
       ...$paths
     ]
     | str join " \\\n  "
-    | let fetch_cmd
-    | save -r fetch_cmd
-
-    print $fetch_cmd
+    | let fetchCmd
+    | print
+    $fetchCmd
   }
+} | let fetchCmd
+let report = $report | insert fetch_cmd $fetchCmd
+
+gha group "report" {
+  $report | save report_($system).json
+  $report | to json | print
 }
