@@ -87,9 +87,10 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
+          sparse-checkout-cone-mode: false
           sparse-checkout: |
-            .github/actions
-            review
+            /.github/actions
+            /review
 
       - name: setup nu
         uses: ./.github/actions/setup-nu
@@ -127,13 +128,14 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
+          sparse-checkout-cone-mode: false
           sparse-checkout: |
-            .github/actions
-            review
-            flake.lock
-            flake.nix
-            patches
-            drv-build-support.nix
+            /.github/actions
+            /review
+            /flake.lock
+            /flake.nix
+            /patches
+            /drv-build-support.nix
 
       - name: setup nu
         uses: ./.github/actions/setup-nu
@@ -195,9 +197,10 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
+          sparse-checkout-cone-mode: false
           sparse-checkout: |
-            .github/actions
-            review
+            /.github/actions
+            /review
 
       - name: setup nu
         uses: ./.github/actions/setup-nu

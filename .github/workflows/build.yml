@@ -78,7 +78,9 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          sparse-checkout: .github/actions
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /.github/actions
 
       - name: setup nu
         uses: ./.github/actions/setup-nu
