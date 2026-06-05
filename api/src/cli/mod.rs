@@ -2,8 +2,9 @@ use clap::{Parser, Subcommand};
 use tracing::level_filters::LevelFilter;
 use tracing_subscriber::EnvFilter;
 
-use crate::cli::serve::ServeCommand;
+use crate::cli::{check_id_token::CheckIdTokenCommand, serve::ServeCommand};
 
+mod check_id_token;
 mod serve;
 
 pub async fn main() -> anyhow::Result<()> {
@@ -19,6 +20,7 @@ pub async fn main() -> anyhow::Result<()> {
 
     match cli.command {
         Command::Serve(cmd) => cmd.invoke().await,
+        Command::CheckIdToken(cmd) => cmd.invoke().await,
     }
 }
 
@@ -33,4 +35,6 @@ struct Cli {
 enum Command {
     /// Start the HTTP API server
     Serve(ServeCommand),
+    /// Verify a GitHub Actions OIDC ID token and print its claims.
+    CheckIdToken(CheckIdTokenCommand),
 }
