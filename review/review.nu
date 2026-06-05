@@ -157,7 +157,7 @@ if $env.IDENTIFY_STILL_FAILING_PACKAGES == '1' {
     | let candidates
 
     if ($candidates | is-not-empty) {
-      try { nix build --keep-going -L $jobsArg -f. ...$candidates.name }
+      try { nix build --keep-going -L ...([$jobsArg] | compact -e) -f. ...$candidates.name }
     }
 
     $candidates
