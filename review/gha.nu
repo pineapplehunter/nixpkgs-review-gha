@@ -5,8 +5,21 @@ export def "gha group" [name: string, block: closure] {
   $result
 }
 
-export def "gha error" [msg: string] {
-  print $"::error::($msg)"
+def "gha log" [level: string, args: record, msg: string] {
+  $args
+  | compact
+  | transpose name value
+  | each { $"($in.name)=($in.value)" }
+  | str join ","
+  | print $"::($level) ($in)::($msg)"
+}
+
+export def "gha warning" [--title: string, msg: string] {
+  gha log warning { title: $title } $msg
+}
+
+export def "gha error" [--title: string, msg: string] {
+  gha log error { title: $title } $msg
 }
 
 export def "gha output" [name: string] {
