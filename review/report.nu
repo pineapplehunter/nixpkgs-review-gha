@@ -19,7 +19,7 @@ gha group "generate report" {
   let reports = $systems | each { try { open $"report_($in).json" } }
 
   $reports | to json | print
-  $reports | to json | save reports.json
+  $reports | to json | save -f reports.json
 
   mut nixpkgsReviewCmd = $"nixpkgs-review pr ($env.PR_NUMBER)"
   if ($inputs.extra-args-raw | is-not-empty) {
@@ -32,7 +32,7 @@ gha group "generate report" {
   $report += $"Command: `($nixpkgsReviewCmd)`\n"
   $report += $"Commit: [`($head)`]\(https://github.com/NixOS/nixpkgs/commit/($head)) \([subsequent changes]\(https://github.com/NixOS/nixpkgs/compare/($head)..pull/($env.PR_NUMBER)/head))\n"
   $report += $"Merge: [`($merge)`]\(https://github.com/NixOS/nixpkgs/commit/($merge))\n\n"
-  $report += $"Logs: https://github.com/($env.REPO)/actions/runs/($env.RUN_ID)\n\n"
+  $report += $"Logs: https://github.com/($env.REPO)/actions/runs/($env.RUN_ID)/attempts/($env.RUN_ATTEMPT)\n\n"
 
   $reports
   | where ($it.fetchCmd | is-not-empty)
@@ -73,7 +73,7 @@ gha group "generate report" {
   }
 
   print $report
-  $report | save report.md
+  $report | save -f report.md
 
   $reports.result
   | all { select failed still_failing | values | compact | flatten | is-empty }

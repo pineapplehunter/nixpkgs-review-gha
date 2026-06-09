@@ -120,8 +120,8 @@ if $env.IDENTIFY_UNSUPPORTED_PACKAGES == '1' {
     git fetch origin $merge
     git switch -d $merge
 
-    nix config show --json | save -r ../nix-config.json
-    nix derivation show --recursive -f. ...$result.failed.name | save -r ../drv-graph.json
+    nix config show --json | save -rf ../nix-config.json
+    nix derivation show --recursive -f. ...$result.failed.name | save -rf ../drv-graph.json
     let buildSupport = nix-instantiate ...[
       --eval --strict --json ("../drv-build-support.nix" | path expand)
       --argstr configPath ("../nix-config.json" | path expand)
@@ -175,6 +175,6 @@ if $env.IDENTIFY_STILL_FAILING_PACKAGES == '1' {
 let report = $report | update result $result
 
 gha group "report" {
-  $report | save report_($system).json
+  $report | save -f report_($system).json
   $report | to json | print
 }

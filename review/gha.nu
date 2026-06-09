@@ -14,7 +14,7 @@ export def "gha output" [name: string] {
 }
 
 export def "gha step-summary" [] {
-  save -ra $env.GITHUB_STEP_SUMMARY
+  save -rf $env.GITHUB_STEP_SUMMARY
 }
 
 export def "gha review-inputs" [] {
