@@ -18,7 +18,13 @@
           overlays = [
             (final: prev: {
               nixpkgs-review = prev.nixpkgs-review.overrideAttrs (attrs: {
-                patches = attrs.patches or [ ] ++ [ ./patches/0001-Add-package-aliases-to-JSON-report.patch ];
+                patches = attrs.patches or [ ] ++ [
+                  (final.fetchpatch2 {
+                    # https://github.com/Mic92/nixpkgs-review/pull/654
+                    url = "https://github.com/Mic92/nixpkgs-review/commit/5aa30517cea5b4f80056ab5a175467e3acf33930.patch";
+                    hash = "sha256-LweGea6LPc3TfxD4ceRRGAE8B8EOTDly1usRQWok3Bo=";
+                  })
+                ];
               });
             })
           ];
