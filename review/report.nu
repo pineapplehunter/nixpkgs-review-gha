@@ -21,13 +21,19 @@ gha group "generate report" {
   $reports | to json | print
   $reports | to json | save -f reports.json
 
+  $reports.result
+  | all { select failed still_failing | values | compact | flatten | is-empty }
+  | let success
+  | if $in { ":white_check_mark:" } else { ":x" }
+  | let icon
+
   mut nixpkgsReviewCmd = $"nixpkgs-review pr ($env.PR_NUMBER)"
   if ($inputs.extra-args-raw | is-not-empty) {
     $nixpkgsReviewCmd += $" ($inputs.extra-args-raw)"
   }
 
   mut report = ""
-  $report += $"## `nixpkgs-review` result\n\n"
+  $report += $"## ($icon) `nixpkgs-review` result\n\n"
   $report += $"Generated using [`nixpkgs-review-gha`]\(https://github.com/Defelo/nixpkgs-review-gha) \([`($env.SHA | str substring ..<7)`]\(https://github.com/Defelo/nixpkgs-review-gha/commit/($env.SHA)))\n\n"
   $report += $"Command: `($nixpkgsReviewCmd)`\n"
   $report += $"Commit: [`($head)`]\(https://github.com/NixOS/nixpkgs/commit/($head)) \([subsequent changes]\(https://github.com/NixOS/nixpkgs/compare/($head)..pull/($env.PR_NUMBER)/head))\n"
@@ -75,10 +81,7 @@ gha group "generate report" {
   print $report
   $report | save -f report.md
 
-  $reports.result
-  | all { select failed still_failing | values | compact | flatten | is-empty }
-  | let success
-  | if $in { print "SUCCESS" } else { print "FAILURE" }
+  if $success { print "SUCCESS" } else { print "FAILURE" }
 
   $report
   | str replace -r '^.*' $"$0 for [#($env.PR_NUMBER)]\(https://github.com/NixOS/nixpkgs/pull/($env.PR_NUMBER))"

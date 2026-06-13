@@ -64,11 +64,23 @@ impl ReportMarkdownRenderer {
             report: &'a Report,
             #[serde(flatten)]
             reporter: &'a Claims,
+            success: bool,
         }
 
-        let ctx = tera::Context::from_serialize(Context { report, reporter }).unwrap();
+        let ctx = tera::Context::from_serialize(Context {
+            report,
+            reporter,
+            success: report.is_success(),
+        })
+        .unwrap();
 
         self.0.render("report", &ctx).unwrap()
+    }
+}
+
+impl Report {
+    pub fn is_success(&self) -> bool {
+        self.systems.iter().all(|x| x.is_success())
     }
 }
 
@@ -97,6 +109,10 @@ impl SystemReport {
             || !tests.is_empty()
             || !built.is_empty()
             || !unsupported.is_empty()
+    }
+
+    fn is_success(&self) -> bool {
+        self.failed.is_empty() && self.still_failing.is_empty()
     }
 }
 
@@ -127,6 +143,24 @@ mod tests {
                 .into_iter()
                 .map(|x| SystemReport {
                     fetch_cmd: x.fetch_cmd.map(|_| String::new()),
+                    ..x
+                })
+                .collect(),
+            ..report()
+        };
+
+        insta::assert_snapshot!(ReportMarkdownRenderer::new().render(&report, &reporter()));
+    }
+
+    #[test]
+    fn render_success() {
+        let report = Report {
+            systems: report()
+                .systems
+                .into_iter()
+                .map(|x| SystemReport {
+                    failed: Vec::new(),
+                    still_failing: Vec::new(),
                     ..x
                 })
                 .collect(),

@@ -1,4 +1,4 @@
-## `nixpkgs-review` result
+## {% if success %}:white_check_mark:{% else %}:x:{% endif %} `nixpkgs-review` result
 
 Generated using [`nixpkgs-review-gha`](https://github.com/Defelo/nixpkgs-review-gha) ([`{{ workflow_sha | truncate(length=7, end="") }}`](https://github.com/Defelo/nixpkgs-review-gha/commit/{{ workflow_sha }}))
 
