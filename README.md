@@ -19,11 +19,11 @@ Run [nixpkgs-review](https://github.com/Mic92/nixpkgs-review) in GitHub Actions
 3. If you want to set up [automatic self-updates](#automatic-self-updates-optional), please enable the `self-update` workflow ([Actions / `self-update`](../../actions/workflows/self-update.yml) > `...` button (top right corner) > `Enable workflow`).
 
 ### Post Results / Auto Approve/Merge (optional)
-nixpkgs-review-gha can automatically post the results as a comment on the reviewed pull requests out of the box by using an [nrgha-api server](api).
+nixpkgs-review-gha can automatically post the results as a comment on the reviewed pull requests and approve the PR after a successful review out of the box by using an [nrgha-api server](api).
 The default instance will use the [@nixpkgs-review-gha](https://github.com/nixpkgs-review-gha) account to create its report comments.
 If you want to host and use your own nrgha-api instance, you can [create a new variable](../../settings/variables/actions/new) with the name `API_URL` and set its value to your base URL (without a trailing slash).
 
-If you don't want to use the API server, or if you also want to be able to automatically mark PRs as ready for review or approve/merge them on review success, you need to generate a [personal access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens):
+If you don't want to use the API server, or if you also want to be able to automatically mark PRs as ready for review or merge them on review success, you need to generate a [personal access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens):
 
 1. Go to <https://github.com/settings/tokens> and generate a new **classic** token with the `public_repo` scope.
 2. In your fork, go to "Settings" > "Secrets and variables" > "Actions" and [add a new repository secret](../../settings/secrets/actions/new) with the name `GH_TOKEN` and set its value to the personal access token you generated before.
