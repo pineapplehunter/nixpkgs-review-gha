@@ -45,6 +45,15 @@ on:
         required: true
         type: boolean
         default: false
+      builders:
+        description: "Nix builders to use"
+        required: true
+        type: choice
+        default: "gha"
+        options:
+          - "gha"
+          - "remote"
+          - "both"
       extra-args:
         description: "nixpkgs-review extra args"
         required: false
@@ -149,9 +158,9 @@ jobs:
             || (matrix.system == 'x86_64-darwin' && inputs.x86_64-darwin == 'yes_sandbox_relaxed'
             || matrix.system == 'aarch64-darwin' && inputs.aarch64-darwin == 'yes_sandbox_relaxed') && 'relaxed'
             || 'true' }}
-          builders: ${{ (vars.USE_BUILDERS == 'yes' || vars.USE_BUILDERS == 'always') && vars.BUILDERS || '' }}
-          ssh-key: ${{ (vars.USE_BUILDERS == 'yes' || vars.USE_BUILDERS == 'always') && secrets.SSH_KEY || '' }}
-          ssh-cert: ${{ (vars.USE_BUILDERS == 'yes' || vars.USE_BUILDERS == 'always') && secrets.SSH_CERT || '' }}
+          builders: ${{ inputs.builders != 'gha' && vars.BUILDERS || '' }}
+          ssh-key: ${{ inputs.builders != 'gha' && secrets.SSH_KEY || '' }}
+          ssh-cert: ${{ inputs.builders != 'gha' && secrets.SSH_CERT || '' }}
 
       - name: clone nixpkgs
         uses: actions/checkout@v6
@@ -170,7 +179,6 @@ jobs:
           CACHIX_CACHE: ${{ vars.CACHIX_CACHE }}
           CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
           CACHIX_SIGNING_KEY: ${{ secrets.CACHIX_SIGNING_KEY }}
-          USE_BUILDERS: ${{ vars.USE_BUILDERS }}
           PR_JSON: ${{ needs.prepare.outputs.pr }}
           IDENTIFY_STILL_FAILING_PACKAGES: ${{ vars.IDENTIFY_STILL_FAILING_PACKAGES }}
           IDENTIFY_UNSUPPORTED_PACKAGES: ${{ vars.IDENTIFY_UNSUPPORTED_PACKAGES }}

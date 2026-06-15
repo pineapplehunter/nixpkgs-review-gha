@@ -88,7 +88,6 @@ Set the following [secrets](../../settings/secrets/actions):
 Set the following [variables](../../settings/variables/actions):
 
 - `BUILDERS`: A newline separated list of build machines in the same format as the [`builders` option in `nix.conf`](https://nix.dev/manual/nix/latest/command-ref/conf-file#conf-builders). You will need to set the value of the third field (ssh identity) to `/etc/nix/ssh_id` which is where your `SSH_KEY` is placed. Your `SSH_CERT` should be picked up automatically, if you have configured one.
-- `USE_BUILDERS`: Either `no`, `yes`, or `always`. If set to `yes`, remote builders are used *in addition to* the GitHub Actions runner. If set to `always`, *only* remote builders are used and no builds happen on the runner. If set to `no`, remote builders are not used at all.
 
 For example, you can set `BUILDERS` to the following if you want to build on the [nix-community builders](https://nix-community.org/community-builders/). Keep in mind that these builders should generally [not be trusted](https://nix-community.org/community-builders/#notes-on-security-and-safety), so be careful with what you might push into the [binary caches](#push-to-attic-cache-optional) you configured above.
 

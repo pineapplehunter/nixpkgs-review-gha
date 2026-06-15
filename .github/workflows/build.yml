@@ -46,6 +46,15 @@ on:
         required: true
         type: boolean
         default: false
+      builders:
+        description: "Nix builders to use"
+        required: true
+        type: choice
+        default: "gha"
+        options:
+          - "gha"
+          - "remote"
+          - "both"
       upterm:
         description: "Start upterm session after nix build"
         required: true
@@ -97,9 +106,9 @@ jobs:
             || (matrix.system == 'x86_64-darwin' && inputs.x86_64-darwin == 'yes_sandbox_relaxed'
             || matrix.system == 'aarch64-darwin' && inputs.aarch64-darwin == 'yes_sandbox_relaxed') && 'relaxed'
             || 'true' }}
-          builders: ${{ (vars.USE_BUILDERS == 'yes' || vars.USE_BUILDERS == 'always') && vars.BUILDERS || '' }}
-          ssh-key: ${{ (vars.USE_BUILDERS == 'yes' || vars.USE_BUILDERS == 'always') && secrets.SSH_KEY || '' }}
-          ssh-cert: ${{ (vars.USE_BUILDERS == 'yes' || vars.USE_BUILDERS == 'always') && secrets.SSH_CERT || '' }}
+          builders: ${{ inputs.builders != 'gha' && vars.BUILDERS || '' }}
+          ssh-key: ${{ inputs.builders != 'gha' && secrets.SSH_KEY || '' }}
+          ssh-cert: ${{ inputs.builders != 'gha' && secrets.SSH_CERT || '' }}
 
       - name: nix build
         run: nix build --keep-going -L ${{ inputs.packages }}
