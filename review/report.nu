@@ -24,7 +24,7 @@ gha group "generate report" {
   $reports.result
   | all { select failed still_failing | values | compact | flatten | is-empty }
   | let success
-  | if $in { ":white_check_mark:" } else { ":x" }
+  | if $in { ":white_check_mark:" } else { ":x:" }
   | let icon
 
   mut nixpkgsReviewCmd = $"nixpkgs-review pr ($inputs.pr)"
