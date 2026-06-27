@@ -83,6 +83,6 @@
 
   nixConfig = {
     abort-on-warn = true;
-    commit-lock-file-summary = "chore: update flake.lock";
+    commit-lock-file-summary = "flake.lock: update";
   };
 }

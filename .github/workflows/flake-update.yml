@@ -74,7 +74,7 @@ jobs:
             echo "::notice::PR for flake-update branch already exists: ${url}"
           else
             echo "::notice::Creating a new PR for the flake-update branch."
-            gh pr create -t 'chore: update flake.lock' -F .pr_body -H flake-update
+            gh pr create -t 'flake.lock: update' -F .pr_body -H flake-update
 
             # push again to trigger ci
             git commit --amend --no-edit
