@@ -25,11 +25,6 @@
                     url = "https://github.com/Mic92/nixpkgs-review/commit/5aa30517cea5b4f80056ab5a175467e3acf33930.patch";
                     hash = "sha256-LweGea6LPc3TfxD4ceRRGAE8B8EOTDly1usRQWok3Bo=";
                   })
-                  (final.fetchpatch2 {
-                    # https://github.com/Mic92/nixpkgs-review/pull/646
-                    url = "https://github.com/Mic92/nixpkgs-review/commit/3c2f621ae7f7d0f92414971cb7e05b293a5d8547.patch";
-                    hash = "sha256-QjcLvajo1ZmPz6tzHjLcegMbrbur36s8Cft8v7NamLU=";
-                  })
                 ];
               });
             })
