@@ -14,8 +14,6 @@
         system:
         import nixpkgs {
           inherit system;
-          config.allowDeprecatedx86_64Darwin = true;
-
           overlays = [
             (final: prev: {
               nixpkgs-review = prev.nixpkgs-review.overrideAttrs (attrs: {
@@ -35,7 +33,6 @@
       systems = [
         "x86_64-linux"
         "aarch64-linux"
-        "x86_64-darwin"
         "aarch64-darwin"
         "riscv64-linux"
       ];
