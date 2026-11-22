@@ -4,27 +4,27 @@
 version: 'v0.0.3'
 workflows:
     '.github/workflows/build.yml':
-        - 'cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24'
+        - 'cachix/install-nix-action@bb0495a1086c46893eee56f32fd192dfe4a15bb9'
         - 'owenthereal/action-upterm@6c2d60e09009f59cb4c45c88767c78701f14d121'
         - 'pineapplehunter/niks3-action@ca134429860ff51a0542869464e3b20d3b32c121'
         - 'srz-zumix/post-run-action@42756f7452b9439d0365b7e087b2c364f54209c6'
-        - 'wimpysworld/nothing-but-nix@baf7355748bb5651f08b839669d6bb39051b2874'
+        - 'wimpysworld/nothing-but-nix@b2574ec1cf1462bee0a34de0fb6ff11ad3c43cb2'
     '.github/workflows/check.yml':
         - 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1'
-        - 'cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24'
+        - 'cachix/install-nix-action@bb0495a1086c46893eee56f32fd192dfe4a15bb9'
         - 'pineapplehunter/niks3-action@ca134429860ff51a0542869464e3b20d3b32c121'
         - 'ryanccn/attic-action@dc99f5eb1d5c0495aa26f7b56337b30011fa153e'
         - 'srz-zumix/post-run-action@42756f7452b9439d0365b7e087b2c364f54209c6'
-        - 'wimpysworld/nothing-but-nix@baf7355748bb5651f08b839669d6bb39051b2874'
+        - 'wimpysworld/nothing-but-nix@b2574ec1cf1462bee0a34de0fb6ff11ad3c43cb2'
     '.github/workflows/review.yml':
         - 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1'
         - 'actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333'
         - 'actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9'
-        - 'cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24'
+        - 'cachix/install-nix-action@bb0495a1086c46893eee56f32fd192dfe4a15bb9'
         - 'owenthereal/action-upterm@6c2d60e09009f59cb4c45c88767c78701f14d121'
         - 'pineapplehunter/niks3-action@ca134429860ff51a0542869464e3b20d3b32c121'
         - 'srz-zumix/post-run-action@42756f7452b9439d0365b7e087b2c364f54209c6'
-        - 'wimpysworld/nothing-but-nix@baf7355748bb5651f08b839669d6bb39051b2874'
+        - 'wimpysworld/nothing-but-nix@b2574ec1cf1462bee0a34de0fb6ff11ad3c43cb2'
     '.github/workflows/self-update.yml':
         - 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1'
 dependencies:
@@ -43,9 +43,9 @@ dependencies:
         commit: 'sha1-cf430e030ddbb5b0abf93d22962f4752f3646cd9'
         owner_id: 44036562
         repo_id: 192625955
-    'cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24':
-        ref: 'v31.11.1'
-        commit: 'sha1-13d8dd58da0234aa297dedd986986ccb8e7f3e24'
+    'cachix/install-nix-action@bb0495a1086c46893eee56f32fd192dfe4a15bb9':
+        ref: 'v32.0.0'
+        commit: 'sha1-bb0495a1086c46893eee56f32fd192dfe4a15bb9'
         owner_id: 36824654
         repo_id: 212301524
     'owenthereal/action-upterm@6c2d60e09009f59cb4c45c88767c78701f14d121':
@@ -68,15 +68,10 @@ dependencies:
         commit: 'sha1-42756f7452b9439d0365b7e087b2c364f54209c6'
         owner_id: 1439172
         repo_id: 757239631
-    'srz-zumix/post-run-action@v3':
-        ref: 'v3'
-        commit: 'sha1-42756f7452b9439d0365b7e087b2c364f54209c6'
-        owner_id: 1439172
-        repo_id: 757239631
-    'wimpysworld/nothing-but-nix@baf7355748bb5651f08b839669d6bb39051b2874':
+    'wimpysworld/nothing-but-nix@b2574ec1cf1462bee0a34de0fb6ff11ad3c43cb2':
         ref: 'main'
-        commit: 'sha1-baf7355748bb5651f08b839669d6bb39051b2874'
+        commit: 'sha1-b2574ec1cf1462bee0a34de0fb6ff11ad3c43cb2'
         owner_id: 39407681
         repo_id: 982902962
         uses:
-            - 'srz-zumix/post-run-action@v3'
+            - 'srz-zumix/post-run-action@42756f7452b9439d0365b7e087b2c364f54209c6'
